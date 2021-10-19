@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template("hello.html")
+    return render_template("home.html")
 
 admin = Admin(app, name='Dev', template_mode='bootstrap3')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///admin.db'
