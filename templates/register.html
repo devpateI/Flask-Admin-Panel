@@ -5,18 +5,21 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
 </head>
 <body>
     <h1>Register Page</h1>
-    
+    <div class="form-group"></div>
     <form method="post" action="">
         {{ form.hidden_tag() }}
         {{ form.username }}
         {{ form.password }}
         {{ form.submit() }}
     </form>
-    <br>
-    <br>
-    <a href="{{ url_for('login') }}">Already have an account? Login</a><br>
+    </div>
+    <br><br>
+    <a href="{{ url_for('login') }}" class="btn btn-primary stretched-link">Already have an account? Login</a><br>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <scrit src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </body>
 </html>

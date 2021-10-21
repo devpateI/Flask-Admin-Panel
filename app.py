@@ -1,4 +1,4 @@
-from flask import Flask ,render_template,redirect, url_for
+from flask import Flask ,render_template,redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy 
 from flask_admin import Admin 
 from flask_admin.contrib.sqla import ModelView
@@ -16,7 +16,7 @@ app = Flask(__name__)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///admin.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = 'mysecret'
 admin = Admin(app, name='Dev', template_mode='bootstrap3')
 
@@ -37,6 +37,16 @@ def index():
 def dashboard():
     return render_template("dashboard.html")
 
+@app.route('/success', methods = ['POST'])  
+def success():  
+    if request.method == 'POST':  
+        f = request.files['file']  
+        newFile = FileContents(username=username,name=f.filename, data=f.read())
+        db.session.add(newFile)
+        db.session.commit()
+
+        return 'Saved ' + f.filename + ' to the database'
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -46,6 +56,8 @@ def logout():
 @app.route('/login', methods=['GET','POST'])
 def login():
     form=LoginForm()
+    global username
+    username=form.username.data
     if form.validate_on_submit:
         user=UserLogin.query.filter_by(username=form.username.data).first()
         if user:
@@ -70,6 +82,20 @@ class UserLogin(db.Model,UserMixin):
     id= db.Column(db.Integer,primary_key=True)
     username= db.Column(db.String(20),nullable=False, unique=True)
     password= db.Column(db.String(80),nullable=False)
+
+class FileContents(db.Model):
+    id= db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.LargeBinary, nullable=False)
+    username= db.Column(db.String(20),db.ForeignKey(UserLogin.username))
+    name=db.Column(db.String(300))
+    
+
+class User(db.Model):
+    id = db.Column(UUIDType(binary=False), default=uuid.uuid4, primary_key=True)
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    rating = db.Column(db.Integer)
+    email = db.Column(EmailType, unique=True, nullable=False)
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(),Length(min=4,max=20)],
@@ -103,13 +129,6 @@ class FilterLastNameBrown(BaseSQLAFilter):
 
     def operation(self):
         return 'is Brown'
-
-class User(db.Model):
-    id = db.Column(UUIDType(binary=False), default=uuid.uuid4, primary_key=True)
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
-    rating = db.Column(db.Integer)
-    email = db.Column(EmailType, unique=True, nullable=False)
 
 
 class UserAdmin(ModelView):
@@ -163,9 +182,31 @@ class UserAdmin(ModelView):
         'email',
         'rating',
     ]
+
+class FileContentsAdmin(ModelView):
+    can_view_details = True  # show a modal dialog with records details
+    action_disallowed_list = ['delete', ]
+
+    column_list = [
+        'username',
+        'name',
+        'data',
+    ]
+    form_columns = [
+        'username',
+        'name',
+    ]
+
+    form_create_rules = [
+        'username',
+        'name',
+        
+    ]
     
 admin.add_view(UserAdmin(User, db.session))
 admin.add_view(ModelView(UserLogin, db.session))
+
+admin.add_view(FileContentsAdmin(FileContents, db.session))
 class Mytools(ModelView):
     can_delete = False
     page_size = 50
