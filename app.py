@@ -1,4 +1,4 @@
-from flask import Flask ,render_template,redirect, url_for, request
+from flask import Flask ,render_template,redirect, url_for, request,abort,flash
 from flask_sqlalchemy import SQLAlchemy 
 from flask_admin import Admin 
 from flask_admin.contrib.sqla import ModelView
@@ -11,6 +11,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import InputRequired,Length,ValidationError
 from flask_bcrypt import Bcrypt
+import os
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -18,6 +19,8 @@ bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///admin.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = 'mysecret'
+app.config['MAX_FILE_LENGTH'] = 1024 * 1024 #This line is for adding constraint to upload maximumm 1MB file
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif'] #This line only uploads jpg, png, gif file
 admin = Admin(app, name='Dev', template_mode='bootstrap3')
 
 login_manager = LoginManager()
@@ -41,11 +44,23 @@ def dashboard():
 def success():  
     if request.method == 'POST':  
         f = request.files['file']  
-        newFile = FileContents(username=username,name=f.filename, data=f.read())
-        db.session.add(newFile)
-        db.session.commit()
+        filesize = int(request.cookies['filesize'])
+        if int(filesize) >= app.config["MAX_FILE_LENGTH"]:
+            flash("File is too large",'error') 
+            return redirect(url_for('dashboard'))
+        if f != '':
+            file_ext = os.path.splitext(f.filename)[1]
+        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+            flash('Please upload only jpg, png or gif file','error')
+            return redirect(url_for('dashboard'))
+            # abort(400)
+        else:
+            newFile = FileContents(username=username,name=f.filename, data=f.read())
+            db.session.add(newFile)
+            db.session.commit()
 
-        return 'Saved ' + f.filename + ' to the database'
+            flash('Saved ' + f.filename + ' to the database','success')
+            return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 @login_required
@@ -190,7 +205,7 @@ class FileContentsAdmin(ModelView):
     column_list = [
         'username',
         'name',
-        'data',
+        # 'data',
     ]
     form_columns = [
         'username',
