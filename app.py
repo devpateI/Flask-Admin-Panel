@@ -195,12 +195,13 @@ class FileContentsAdmin(ModelView):
     form_columns = [
         'username',
         'name',
+        'data',
     ]
 
     form_create_rules = [
         'username',
         'name',
-        
+        'data',
     ]
     
 admin.add_view(UserAdmin(User, db.session))
