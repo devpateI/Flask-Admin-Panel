@@ -78,7 +78,14 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password,form.password.data):
                 login_user(user)
+                flash('Login Successful','success')
                 return redirect(url_for("dashboard"))
+            else:
+                flash('Password Incorrect','error')
+                return render_template("login.html", form=form)
+        else:
+            flash('Username Incorrect','error')
+            return render_template("login.html", form=form)
     return render_template("login.html", form=form)
 @app.route('/register', methods=['GET','POST'])
 def register():
