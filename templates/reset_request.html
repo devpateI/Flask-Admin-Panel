@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Request</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+
+</head>
+<body>
+    <h1>Reset Password</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% set message_class = 'alert alert-success' %}
+
+                {% if category == 'error' %}
+                    {% set message_class = 'alert alert-danger' %}
+                {% endif %}
+                <div class="notification {{ message_class }}"><h4>{{ message }}</h4></div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="form-group">
+    <form method="post" action="">
+        {{ form.hidden_tag() }}
+        {{ form.username }}
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+    </div>
+    <div>
+        <!-- <a href="#" class="btn btn-link">Forgot Password</a>
+        <a href="{{ url_for('register') }}" class="btn btn-link">Don't have an account? Sign up</a><br> -->
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <scrit src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>

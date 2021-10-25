@@ -1,4 +1,4 @@
-from flask import Flask ,render_template,redirect, url_for, request,abort,flash
+from flask import Flask ,render_template,redirect, url_for, request,flash
 from flask_sqlalchemy import SQLAlchemy 
 from flask_admin import Admin 
 from flask_admin.contrib.sqla import ModelView
@@ -12,6 +12,8 @@ from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import InputRequired,Length,ValidationError
 from flask_bcrypt import Bcrypt
 import os
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -21,6 +23,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = 'mysecret'
 app.config['MAX_FILE_LENGTH'] = 1024 * 1024 #This line is for adding constraint to upload maximumm 1MB file
 app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif'] #This line only uploads jpg, png, gif file
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'officialnaturelover@gmail.com'
+app.config['MAIL_PASSWORD'] = 'lanroezzjnwzbeoo'
+
+mail = Mail(app)
+
 admin = Admin(app, name='Dev', template_mode='bootstrap3')
 
 login_manager = LoginManager()
@@ -81,11 +92,8 @@ def login():
                 flash('Login Successful','success')
                 return redirect(url_for("dashboard"))
             else:
-                flash('Password Incorrect','error')
+                flash('Username Password Incorrect','error')
                 return render_template("login.html", form=form)
-        else:
-            flash('Username Incorrect','error')
-            return render_template("login.html", form=form)
     return render_template("login.html", form=form)
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -100,10 +108,80 @@ def register():
 
     return render_template("register.html",form=form)
 
+@app.route('/reset_password', methods=['GET','POST'])
+def reset_password():
+    form=ResetPasswordForm()
+    if form.validate_on_submit():
+        user=UserLogin.query.filter_by(username=form.username.data).first()
+        if user:
+            send_mail(user)
+            flash('Reset request sent. Check your Email','success')
+            return redirect(url_for('login'))
+    else:
+        flash('Enter a valid Username','error')
+    return render_template("reset_request.html",form=form)
+
+def send_mail(user):
+    token=user.get_token()
+    msg=Message('PasswordReset Request',recipients=[user.username],sender='noreply@dev.com')
+    msg.body = f''' To reset Password follow link below.
+
+    {url_for('reset_token',token=token,_external=True)}
+
+    If you didn't send a password reset request. Please ignore this message.
+
+    ...
+
+
+    '''
+    print(msg.body)
+
+@app.route('/reset_password/<token>',methods=['GET','POST'])
+def reset_token(token):
+    form = ChangePasswordForm()
+    user=UserLogin.verify_token(token)
+    if user is None:
+        flash('That is invalid token','warning')
+        return redirect(url_for('reset_password'))
+    
+    # if form.validate_on_submit:
+    #     print(form.password.data)
+    #     hashed_password = bcrypt.generate_password_hash(form.password.data)
+    #     user.password = hashed_password
+    #     db.session.commit()
+    #     flash('Password changed','success')
+    #     return redirect(url_for('login'))
+
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash('Password changed','success')
+        return redirect(url_for('login'))
+
+
+    return render_template("change_password.html",form=form)
+       
+
+
 class UserLogin(db.Model,UserMixin):
     id= db.Column(db.Integer,primary_key=True)
     username= db.Column(db.String(20),nullable=False, unique=True)
     password= db.Column(db.String(80),nullable=False)
+
+    def get_token(self,expires_sec=300):
+        serial=Serializer(app.config['SECRET_KEY'],300)
+        return serial.dumps({'user_id':self.id}).decode('utf8')
+
+    @staticmethod
+    def verify_token(token):
+        serial=Serializer(app.config['SECRET_KEY'])
+        try:
+            user_id=serial.loads(token)['user_id']
+        except:
+            return None
+        return UserLogin.query.get(user_id)
+    
 
 class FileContents(db.Model):
     id= db.Column(db.Integer, primary_key=True)
@@ -123,7 +201,7 @@ class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(),Length(min=4,max=20)],
     render_kw={"placeholder": "Username"})
 
-    password = StringField(validators=[InputRequired(),Length(min=4,max=20)],
+    password = PasswordField(validators=[InputRequired(),Length(min=4,max=20)],
     render_kw={"placeholder": "Password"})
 
     submit = SubmitField("Register")
@@ -137,10 +215,22 @@ class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired(),Length(min=4,max=20)],
     render_kw={"placeholder": "Username"})
 
-    password = StringField(validators=[InputRequired(),Length(min=4,max=20)],
+    password = PasswordField(validators=[InputRequired(),Length(min=4,max=20)],
     render_kw={"placeholder": "Password"})
 
     submit = SubmitField("Login")
+
+class ChangePasswordForm(FlaskForm):
+    password = PasswordField(validators=[InputRequired(),Length(min=4,max=20)],
+    render_kw={"placeholder": "Password"})
+
+    submit = SubmitField("Change Password")
+
+class ResetPasswordForm(FlaskForm):
+    username = StringField(validators=[InputRequired(),Length(min=4,max=20)],
+    render_kw={"placeholder": "Username"})
+
+    submit = SubmitField("Send Email")
 
 class FilterLastNameBrown(BaseSQLAFilter):
     def apply(self, query, value, alias=None):
