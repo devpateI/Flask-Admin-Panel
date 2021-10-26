@@ -22,7 +22,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///admin.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = 'mysecret'
 app.config['MAX_FILE_LENGTH'] = 1024 * 1024 #This line is for adding constraint to upload maximumm 1MB file
-app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif'] #This line only uploads jpg, png, gif file
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif', '.txt'] #This line only uploads jpg, png, gif file
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -49,12 +49,14 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    f=db.session.query(FileContents.username,FileContents.name).all()
+    return render_template("dashboard.html",f=f)
 
 @app.route('/success', methods = ['POST'])  
 def success():  
     if request.method == 'POST':  
         f = request.files['file']  
+        print(f.read())
         filesize = int(request.cookies['filesize'])
         if int(filesize) >= app.config["MAX_FILE_LENGTH"]:
             flash("File is too large",'error') 
@@ -123,15 +125,10 @@ def reset_password():
 
 def send_mail(user):
     token=user.get_token()
-    msg=Message('PasswordReset Request',recipients=[user.username],sender='noreply@dev.com')
+    msg=Message('PasswordReset Request',recipients=[user.username],sender='noreply@gmail.com')
     msg.body = f''' To reset Password follow link below.
 
     {url_for('reset_token',token=token,_external=True)}
-
-    If you didn't send a password reset request. Please ignore this message.
-
-    ...
-
 
     '''
     print(msg.body)
@@ -162,7 +159,14 @@ def reset_token(token):
 
     return render_template("change_password.html",form=form)
        
-
+@app.route('/download/<filename>')
+def download_file(filename):
+    s=db.session.query(FileContents.data).filter(FileContents.name == filename).first()
+    with open(filename,'w') as f:
+        f.write(str(s[0]))
+        f.close()
+    print(s)
+    return redirect(url_for('dashboard'))
 
 class UserLogin(db.Model,UserMixin):
     id= db.Column(db.Integer,primary_key=True)
