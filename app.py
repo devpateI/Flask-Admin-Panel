@@ -141,15 +141,7 @@ def reset_token(token):
     if user is None:
         flash('That is invalid token','warning')
         return redirect(url_for('reset_password'))
-    
-    # if form.validate_on_submit:
-    #     print(form.password.data)
-    #     hashed_password = bcrypt.generate_password_hash(form.password.data)
-    #     user.password = hashed_password
-    #     db.session.commit()
-    #     flash('Password changed','success')
-    #     return redirect(url_for('login'))
-
+ 
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
         user.password = hashed_password
