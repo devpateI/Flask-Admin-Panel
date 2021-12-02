@@ -27,8 +27,8 @@ app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif', '.txt'] #This line on
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'officialnaturelover@gmail.com'
-app.config['MAIL_PASSWORD'] = 'lanroezzjnwzbeoo'
+app.config['MAIL_USERNAME'] = ''# your Gmail account
+app.config['MAIL_PASSWORD'] = ''# your Gmail password
 
 mail = Mail(app)
 
