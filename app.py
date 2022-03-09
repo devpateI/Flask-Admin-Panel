@@ -22,7 +22,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///admin.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SECRET_KEY'] = 'mysecret'
 app.config['MAX_FILE_LENGTH'] = 1024 * 1024 #This line is for adding constraint to upload maximumm 1MB file
-app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif', '.txt'] #This line only uploads jpg, png, gif file
+app.config['UPLOAD_EXTENSIONS'] = ['.txt'] #This line only uploads jpg, png, gif file
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -56,7 +56,7 @@ def dashboard():
 def success():  
     if request.method == 'POST':  
         f = request.files['file']  
-        print(f.read())
+        # print(f.read())
         filesize = int(request.cookies['filesize'])
         if int(filesize) >= app.config["MAX_FILE_LENGTH"]:
             flash("File is too large",'error') 
@@ -64,7 +64,7 @@ def success():
         if f != '':
             file_ext = os.path.splitext(f.filename)[1]
         if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-            flash('Please upload only jpg, png or gif file','error')
+            flash('Please upload only .txt','error')
             return redirect(url_for('dashboard'))
             # abort(400)
         else:

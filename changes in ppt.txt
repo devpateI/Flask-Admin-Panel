@@ -1,0 +1,1 @@
+b'change name of ppt\r\nin intro add what you have done not about data science\r\nwrite 2 words points rather then full sentances\r\nadd hardware software requirements\r\nadd day to day work\r\nadd used softwares and libraries\r\naddvideo link at the end of your project\r\n'
