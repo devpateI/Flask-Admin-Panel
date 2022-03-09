@@ -27,8 +27,8 @@ app.config['UPLOAD_EXTENSIONS'] = ['.txt'] #This line only uploads jpg, png, gif
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'officialnaturelover@gmail.com'
-app.config['MAIL_PASSWORD'] = 'lanroezzjnwzbeoo'
+app.config['MAIL_USERNAME'] = ''# your Gmail account
+app.config['MAIL_PASSWORD'] = ''# your Gmail password
 
 mail = Mail(app)
 
@@ -46,13 +46,13 @@ def load_user(user_id):
 def index():
     return render_template("home.html")
 
-@app.route('/dashboard')
+@app.route('/dashboard') #for dashboard
 @login_required
 def dashboard():
     f=db.session.query(FileContents.username,FileContents.name).all()
     return render_template("dashboard.html",f=f)
 
-@app.route('/success', methods = ['POST'])  
+@app.route('/success', methods = ['POST'])  #for file uploading
 def success():  
     if request.method == 'POST':  
         f = request.files['file']  
