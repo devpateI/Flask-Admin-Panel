@@ -88,6 +88,8 @@ def logout():
     logout_user()
     return redirect('login')
 
+# end point for login
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
